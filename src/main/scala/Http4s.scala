@@ -1,17 +1,17 @@
+import cats.Monad
 import cats.data.{Kleisli, OptionT}
-import cats.*
-import cats.effect.*
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits.*
-import org.http4s.circe.*
-import org.http4s.*
-import io.circe.generic.auto.*
-import io.circe.syntax.*
-import org.http4s.blaze.server.BlazeServerBuilder
-import org.http4s.dsl.*
-import org.http4s.dsl.impl.*
-import org.http4s.headers.*
-import org.http4s.implicits.*
-import org.http4s.server.*
+import com.comcast.ip4s.{ipv4, port}
+import org.http4s.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import org.http4s._
+import org.http4s.dsl._
+import org.http4s.dsl.io._
+import org.http4s.ember.server.EmberServerBuilder
+import org.typelevel.log4cats.LoggerFactory
+import org.typelevel.log4cats.slf4j.Slf4jFactory
 
 import java.time.Year
 import java.util.UUID
@@ -19,6 +19,8 @@ import scala.collection.mutable
 import scala.util.Try
 
 object Http4s extends IOApp{
+
+  implicit val loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
 
   type Actor = String
   case class Movie(id: String, title: String, year: Int, actors: List[Actor], director: String)
@@ -132,17 +134,13 @@ object Http4s extends IOApp{
   def allRoutesComplete[F[_]: Monad]: HttpApp[F] =
     allRoutes[F].orNotFound
 
-  override def run(args: List[String]): IO[ExitCode] = {
-    val apis = Router(
-      "/api" -> movieRoutes[IO],
-      "/api/admin" -> directorRoutes[IO]
-    ).orNotFound
+  val serverResource = EmberServerBuilder
+    .default[IO]
+    .withHost(ipv4"0.0.0.0")
+    .withPort(port"8080")
+    .withHttpApp(allRoutesComplete)
+    .build
 
-    BlazeServerBuilder[IO]
-      .bindHttp(8080, "localhost")
-      .withHttpApp(allRoutesComplete)
-      .resource
-      .use(_ => IO.never)
-      .as(ExitCode.Success)
-  }
+  override def run(args: List[String]): IO[ExitCode] =
+    serverResource.use(_ => IO.never).as(ExitCode.Success)
 }

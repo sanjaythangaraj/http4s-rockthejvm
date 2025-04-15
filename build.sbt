@@ -8,9 +8,10 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies ++= Seq(
-  "org.http4s" %% "http4s-blaze-server" % "1.0.0-M32",
-  "org.http4s" %% "http4s-dsl" % "1.0.0-M32",
-  "org.http4s" %% "http4s-circe" % "1.0.0-M32",
+  "org.http4s" %% "http4s-ember-server" % "1.0.0-M44",
+  "org.http4s" %% "http4s-dsl" % "1.0.0-M44",
+  "org.http4s" %% "http4s-circe" % "1.0.0-M44",
   "io.circe" %% "circe-generic" % "0.14.12",
-  "org.slf4j" % "slf4j-nop" % "2.0.17"
+  "org.typelevel" %% "log4cats-slf4j" % "2.7.0",
+  "org.slf4j" % "slf4j-simple" % "2.0.17"
 )
